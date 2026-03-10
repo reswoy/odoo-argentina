@@ -19,12 +19,6 @@ ORPHAN_VIEW_PATTERNS = [
     'action_post_and_new',
 ]
 
-# XML IDs of account.account.tag records removed in v19 that may still be
-# referenced by tax repartition lines. We unlink the m2m relation first so
-# Odoo can safely delete the tag during _process_end.
-ORPHAN_TAG_XMLIDS = [
-    'l10n_ar_ux.tag_ret_perc_sicore_aplicada',
-]
 
 
 def migrate(cr, version):
@@ -57,21 +51,18 @@ def _cleanup_orphan_views(cr):
 
 
 def _cleanup_orphan_tags(cr):
-    for xmlid in ORPHAN_TAG_XMLIDS:
-        module, name = xmlid.split('.')
-        cr.execute("""
+    # Remove ALL m2m references for tags owned by l10n_ar_ux, so Odoo can
+    # safely delete them during _process_end without FK violations
+    cr.execute("""
+        DELETE FROM account_account_tag_account_tax_repartition_line_rel
+        WHERE account_account_tag_id IN (
             SELECT res_id FROM ir_model_data
-            WHERE module = %s AND name = %s AND model = 'account.account.tag'
-        """, (module, name))
-        row = cr.fetchone()
-        if row:
-            tag_id = row[0]
-            # Remove m2m references so the tag can be safely deleted by Odoo
-            cr.execute("""
-                DELETE FROM account_account_tag_account_tax_repartition_line_rel
-                WHERE account_account_tag_id = %s
-            """, (tag_id,))
-            _logger.info(
-                "Unlinked tag '%s' (id=%s) from %s tax repartition line(s)",
-                xmlid, tag_id, cr.rowcount,
-            )
+            WHERE module = 'l10n_ar_ux'
+            AND model = 'account.account.tag'
+        )
+    """)
+    if cr.rowcount:
+        _logger.info(
+            "Unlinked %s tax repartition line reference(s) for l10n_ar_ux tags",
+            cr.rowcount,
+        )
