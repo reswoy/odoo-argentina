@@ -21,9 +21,21 @@ ORPHAN_VIEW_PATTERNS = [
 
 
 
+
+# Modules that are no longer installable in v19 but may be left in 'to upgrade'
+# state by the platform upgrade, causing an ERROR in the loading phase.
+NOT_INSTALLABLE_MODULES = [
+    'stock_account_ux',
+    'l10n_ar_tax_ratio',
+    'account_tax_settlement',
+    'l10n_ar_purchase_stock',
+]
+
+
 def migrate(cr, version):
     _cleanup_orphan_views(cr)
     _cleanup_orphan_tags(cr)
+    _cleanup_not_installable_modules(cr)
 
 
 def _cleanup_orphan_views(cr):
@@ -65,4 +77,20 @@ def _cleanup_orphan_tags(cr):
         _logger.info(
             "Unlinked %s tax repartition line reference(s) for l10n_ar_ux tags",
             cr.rowcount,
+        )
+
+
+def _cleanup_not_installable_modules(cr):
+    # Mark modules that are no longer installable as 'uninstalled' so Odoo
+    # doesn't report them as having inconsistent states during loading
+    cr.execute("""
+        UPDATE ir_module_module
+        SET state = 'uninstalled'
+        WHERE name IN %s
+        AND state NOT IN ('uninstalled', 'uninstallable')
+    """, (tuple(NOT_INSTALLABLE_MODULES),))
+    if cr.rowcount:
+        _logger.info(
+            "Marked %s not-installable module(s) as uninstalled: %s",
+            cr.rowcount, NOT_INSTALLABLE_MODULES,
         )
