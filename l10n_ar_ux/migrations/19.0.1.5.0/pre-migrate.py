@@ -13,27 +13,26 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-# Elements removed in Odoo 19 that may still be referenced by orphan views.
-# Each entry: (model, pattern to match in arch_db::text)
+# Patterns to match in arch_db::text, searched across ALL models.
+# These are elements removed in Odoo 19 core that orphan views may still reference.
 ORPHAN_PATTERNS = [
-    ('res.config.settings', 'l10n_ar_afip_activity_id'),
-    ('account.payment', 'action_post_and_new'),
+    'l10n_ar_afip_activity_id',
+    'action_post_and_new',
 ]
 
 
 def migrate(cr, version):
     total_deleted = 0
-    for model, pattern in ORPHAN_PATTERNS:
+    for pattern in ORPHAN_PATTERNS:
         # arch_db is JSONB in Odoo 19 (translatable field), cast to text
         cr.execute("""
             DELETE FROM ir_ui_view
-            WHERE model = %s
-            AND arch_db::text LIKE %s
-        """, (model, f'%{pattern}%'))
+            WHERE arch_db::text LIKE %s
+        """, (f'%{pattern}%',))
         if cr.rowcount:
             _logger.info(
-                "Deleted %s orphan view(s) referencing '%s' in model '%s'",
-                cr.rowcount, pattern, model,
+                "Deleted %s orphan view(s) referencing '%s'",
+                cr.rowcount, pattern,
             )
             total_deleted += cr.rowcount
 
