@@ -31,6 +31,15 @@ NOT_INSTALLABLE_MODULES = [
     'l10n_ar_tax_ratio',
     'account_tax_settlement',
     'l10n_ar_purchase_stock',
+    # Removed or not ported to 19.0
+    'l10n_ar_account_tax_settlement',
+    'l10n_ar_stock_adhoc',
+    'l10n_ar_tax_settlement_backward_comp',
+    'l10n_ar_txt_tucuman',
+    'product_catalog_aeroo_report',
+    'product_catalog_aeroo_report_public_categ',
+    'purchase_stock_picking_invoice_link',
+    'stock_voucher',
 ]
 
 
