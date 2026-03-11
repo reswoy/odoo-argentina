@@ -17,6 +17,7 @@ _logger = logging.getLogger(__name__)
 ORPHAN_VIEW_PATTERNS = [
     'l10n_ar_afip_activity_id',
     'action_post_and_new',
+    'delete_number',
 ]
 
 
