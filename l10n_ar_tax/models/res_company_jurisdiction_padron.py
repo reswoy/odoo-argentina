@@ -43,12 +43,12 @@ class ResCompanyJurisdictionPadron(models.Model):
                 raise ValidationError("El padron para (%s) no está implementado." % rec.state_id.name)
 
     @api.depends("company_id", "state_id")
-    def name_get(self):
-        res = []
+    def _compute_display_name(self):
         for padron in self:
-            name = "%s: %s" % (padron.company_id.name, padron.state_id.name)
-            res += [(padron.id, name)]
-        return res
+            padron.display_name = "%s: %s" % (
+                padron.company_id.name,
+                padron.state_id.name,
+            )
 
     def descompress_file(self, file_padron):
         _logger.log(25, "Descompress zip file")
